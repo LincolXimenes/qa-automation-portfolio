@@ -1,0 +1,30 @@
+{
+  "name": "qa-automation-portfolio",
+  "version": "1.0.0",
+  "description": "Portfólio de automação de testes com Playwright, TypeScript, Page Object Model e testes de API",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --project=ui",
+    "test:api": "playwright test --project=api",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "check": "npm run typecheck && npm run lint"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.20.5",
+    "eslint": "9.39.5",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
+  }
+}
