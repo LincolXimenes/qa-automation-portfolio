@@ -1,0 +1,63 @@
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Suíte a executar'
+        type: choice
+        default: smoke
+        options: [smoke, regression, all]
+
+jobs:
+  qualidade:
+    name: Tipos e lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+
+  testes:
+    name: Testes (${{ matrix.projeto }})
+    needs: qualidade
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        projeto: [ui, api]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Instalar navegador
+        if: matrix.projeto == 'ui'
+        run: npx playwright install --with-deps chromium
+      - name: Definir filtro da suíte
+        id: filtro
+        run: |
+          SUITE="${{ github.event.inputs.suite || 'smoke' }}"
+          if [ "$SUITE" = "smoke" ]; then echo "grep=--grep @smoke" >> "$GITHUB_OUTPUT"
+          elif [ "$SUITE" = "regression" ]; then echo "grep=--grep @regression" >> "$GITHUB_OUTPUT"
+          else echo "grep=" >> "$GITHUB_OUTPUT"; fi
+      - name: Executar testes
+        run: npx playwright test --project=${{ matrix.projeto }} ${{ steps.filtro.outputs.grep }}
+        env:
+          CI: true
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-${{ matrix.projeto }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
